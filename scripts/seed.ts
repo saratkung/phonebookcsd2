@@ -5,8 +5,10 @@
  *
  * Usage: npx tsx scripts/seed.ts
  */
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+
+loadEnv({ path: ".env.local" });
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

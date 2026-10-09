@@ -39,11 +39,11 @@ phonebook/
 │  │  └─ auth.ts                 requireSession()/requireRole() ใช้ตรวจสิทธิ์จริงฝั่ง server
 │  └─ proxy.ts                   Middleware (Next 16 เรียกว่า Proxy) — refresh session + guard route
 ├─ supabase/migrations/          SQL migrations (schema, functions, audit triggers, RLS policies)
-├─ scripts/                      create-admin.ts, seed.ts
+├─ scripts/                      migrate.ts, create-admin.ts, seed.ts
 ├─ tests/
-│  ├─ unit/                      Vitest — รันได้จริงในชุดนี้
-│  ├─ rls/verify-rls.ts          สคริปต์ตรวจ RLS จริงกับ Supabase project (ต้องมี .env.local + seed แล้ว)
-│  └─ e2e/                       Playwright specs (ต้องติดตั้งเพิ่มเติม — ดูหัวข้อ 9)
+│  ├─ unit/                      Vitest — ผ่าน 27/27
+│  ├─ rls/verify-rls.ts          สคริปต์ตรวจ RLS จริงกับ Supabase project — ผ่าน 9/9
+│  └─ e2e/                       Playwright specs — ผ่าน 14/14 (ดูหัวข้อ 9)
 └─ .env.example
 ```
 
@@ -60,27 +60,40 @@ npm install
 1. สร้างโปรเจกต์ใหม่ที่ [supabase.com](https://supabase.com) (หรือรัน Supabase ในเครื่องด้วย Supabase CLI)
 2. ไปที่ **Project Settings > API** คัดลอกค่า `Project URL`, `anon public key`, และ
    `service_role key` (เก็บเป็นความลับ ห้ามเผยแพร่)
-3. ไปที่ **SQL Editor** และรันไฟล์ migration ตามลำดับเลขจาก `supabase/migrations/`:
-   - `0001_init_schema.sql`
-   - `0002_functions_and_audit.sql`
-   - `0003_rls_policies.sql`
-   - `0004_contacts_actor_guard.sql`
-   - `0005_import_log_rpc.sql`
+3. คัดลอก `.env.example` เป็น `.env.local` แล้วกรอกค่าที่ได้จากขั้นตอนที่ 2 (ดูตัวอย่างในข้อ 4 ด้านล่าง)
+4. รัน migration ด้วยวิธีใดวิธีหนึ่ง:
 
-   หรือถ้าใช้ Supabase CLI ที่ลิงก์โปรเจกต์ไว้แล้ว:
+   **วิธีที่ A — สคริปต์อัตโนมัติ (แนะนำ)**: เติม `SUPABASE_DB_PASSWORD` และ
+   `SUPABASE_DB_REGION` (รหัสภูมิภาคของโปรเจกต์ เช่น `ap-south-1`, ดูได้จาก
+   Settings > Database) ใน `.env.local` แล้วรัน
    ```bash
-   supabase db push
+   npm run migrate
    ```
-4. คัดลอก `.env.example` เป็น `.env.local` แล้วกรอกค่าที่ได้จากขั้นตอนที่ 2:
-   ```bash
-   cp .env.example .env.local
-   ```
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=xxxxx
-   SUPABASE_SERVICE_ROLE_KEY=xxxxx   # เก็บเป็นความลับ ใช้เฉพาะสคริปต์ฝั่ง server
-   NEXT_PUBLIC_ORG_NAME=ชื่อหน่วยงานของคุณ
-   ```
+   สคริปต์จะรันไฟล์ทั้ง 5 ไฟล์ใน `supabase/migrations/` ตามลำดับให้อัตโนมัติ
+   ผ่าน Session Pooler (จำเป็นต้องใช้ pooler เพราะ host `db.<ref>.supabase.co`
+   แบบเชื่อมต่อตรงเป็น IPv6-only ในโปรเจกต์ใหม่ และบางเครือข่ายอาจ resolve ไม่ได้)
+   ปลอดภัยที่จะรันซ้ำได้เสมอ (ทุกไฟล์ใช้ `if not exists` / `create or replace`)
+
+   **วิธีที่ B — ด้วยมือ**: เปิด **SQL Editor** ใน Supabase Dashboard แล้วรันไฟล์
+   ตามลำดับเลขทีละไฟล์: `0001_init_schema.sql` → `0002_functions_and_audit.sql`
+   → `0003_rls_policies.sql` → `0004_contacts_actor_guard.sql` → `0005_import_log_rpc.sql`
+
+5. (ไม่บังคับ) ลบ `SUPABASE_DB_PASSWORD`/`SUPABASE_DB_REGION`/`DATABASE_URL`
+   ออกจาก `.env.local` หลังรัน migrate เสร็จ — แอปไม่ได้ใช้ค่าเหล่านี้ตอนรันจริง
+   ใช้แค่ตอนรันสคริปต์ migrate/seed/create-admin เท่านั้น
+
+ตัวอย่าง `.env.local`:
+```bash
+cp .env.example .env.local
+```
+```
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=xxxxx
+SUPABASE_SERVICE_ROLE_KEY=xxxxx   # เก็บเป็นความลับ ใช้เฉพาะสคริปต์ฝั่ง server
+NEXT_PUBLIC_ORG_NAME=ชื่อหน่วยงานของคุณ
+SUPABASE_DB_PASSWORD=xxxxx        # ใช้ชั่วคราวสำหรับ npm run migrate เท่านั้น
+SUPABASE_DB_REGION=ap-south-1     # ใช้ชั่วคราวสำหรับ npm run migrate เท่านั้น
+```
 
 ### 3.3 สร้างบัญชีผู้ดูแลระบบ (Admin) คนแรก
 
@@ -127,7 +140,8 @@ npm run dev
 | `npm run lint`          | ตรวจสอบ ESLint                                         |
 | `npm run test`          | รัน Unit tests (Vitest)                                |
 | `npm run test:rls`      | ตรวจสอบ RLS จริงกับ Supabase project (ต้อง seed ก่อน)  |
-| `npm run test:e2e`      | รัน E2E tests (Playwright — ต้องติดตั้งเพิ่ม)          |
+| `npm run test:e2e`      | รัน E2E tests (Playwright)                             |
+| `npm run migrate`       | รัน SQL migrations อัตโนมัติกับฐานข้อมูลจริง           |
 | `npm run seed`          | สร้างข้อมูลตัวอย่าง (หน่วยงาน/ผู้ใช้/รายชื่อสมมติ)      |
 | `npm run create-admin`  | สร้างบัญชีผู้ดูแลระบบคนแรก                             |
 
@@ -184,7 +198,7 @@ npm run dev
 
 ## 9. การทดสอบ
 
-### 9.1 Unit tests (รันได้จริงในชุดนี้ ไม่ต้องมี Supabase project)
+### 9.1 Unit tests
 
 ```bash
 npm run test
@@ -192,6 +206,8 @@ npm run test
 
 ครอบคลุม: ตรวจสอบรูปแบบเบอร์โทรไทย, Zod schema ของฟอร์มรายชื่อ, Zod schema หน้า
 login, การตรวจสอบแถว CSV นำเข้า (ชื่อ/นามสกุล/เบอร์โทร/หน่วยงาน/ค่าที่ไม่ถูกต้อง)
+
+**ผลการรันจริงล่าสุด: ผ่านทั้งหมด 27/27 เคส**
 
 ### 9.2 ตรวจสอบ RLS จริง (ต้องมี Supabase project + .env.local + seed แล้ว)
 
@@ -204,14 +220,14 @@ npm run test:rls
 editor เพิ่ม/แก้ไขได้แต่เปลี่ยนบทบาทตัวเองไม่ได้และลบ (hard delete) ไม่ได้, admin
 เข้าถึง audit log ได้
 
-### 9.3 E2E tests (Playwright — ต้องติดตั้งเพิ่มเติม)
+**ผลการรันจริงล่าสุด (กับ Supabase project จริง): ผ่านทั้งหมด 9/9 ข้อ** — รวมถึง
+ยืนยันแล้วว่า editor ไม่สามารถ UPDATE บทบาทตัวเองเป็น admin ได้จริง (ไม่ใช่แค่ปุ่มถูกซ่อน)
 
-`@playwright/test` อยู่ใน `devDependencies` แล้ว แต่ browser binaries ยังไม่ถูกดาวน์โหลด
-ในสภาพแวดล้อมที่ส่งมอบนี้ (ไม่มี Supabase project จริงให้ทดสอบ) ก่อนรันต้อง:
+### 9.3 E2E tests (Playwright)
 
 ```bash
-npx playwright install
-npm run seed            # ให้มีบัญชี/รายชื่อตัวอย่างสำหรับ spec อ้างอิง
+npx playwright install   # ดาวน์โหลด browser ครั้งแรกเท่านั้น
+npm run seed             # ให้มีบัญชี/รายชื่อตัวอย่างสำหรับ spec อ้างอิง
 npm run test:e2e
 ```
 
@@ -219,6 +235,11 @@ npm run test:e2e
 ค้นหาด้วยเบอร์โทรบางส่วน, เปิดดูรายละเอียดบุคคล, เพิ่มรายชื่อโดย editor, viewer
 ถูกกันไม่ให้เข้าหน้าจัดการรายชื่อ, admin เข้าหน้าผู้ดูแลระบบได้, responsive layout
 (bottom nav บนมือถือ/sidebar บนเดสก์ท็อป), empty state เมื่อค้นหาไม่พบ
+
+**ผลการรันจริงล่าสุด (กับ Supabase project จริง + dev server จริง): ผ่านทั้งหมด 14/14 เคส**
+(ระหว่างพัฒนาเจอ 3 เคสที่ล้มเหลวเพราะตัว test เองอ้างอิง selector ผิด — เช่น
+`getByRole('alert')` ชนกับ route-announcer ของ Next.js, และ label ที่มี `*`
+ทำให้ `getByLabel` แบบ exact match ไม่ตรง — แก้ไขแล้วทั้งหมด ไม่ใช่บั๊กของแอป)
 
 ## 10. Backup และ Restore
 
@@ -240,25 +261,29 @@ pg_restore --clean --if-exists -d "postgresql://postgres:[password]@[host]:5432/
 
 ## 11. ข้อจำกัดและงานที่ยังไม่เสร็จ
 
-สิ่งที่ **ทำเสร็จแล้ว**: โครงสร้าง DB + migrations + RLS ครบทุกตาราง, Server Actions
-ครบทุก flow (auth, contacts CRUD+soft-delete, favorites, departments, admin
-users/roles, audit log, CSV import+preview+dedup), UI ทุกหน้าตาม spec (A-E)
-พร้อม responsive + loading/empty/error state, unit tests ผ่านจริง 27 เคส, build
-production ผ่านจริง (type-check + lint สะอาด)
+สิ่งที่ **ทำเสร็จแล้วและทดสอบจริงแล้ว**: โครงสร้าง DB + migrations + RLS ครบทุกตาราง
+(deploy จริงบน Supabase project `phonebookcsd2`), Server Actions ครบทุก flow (auth,
+contacts CRUD+soft-delete, favorites, departments, admin users/roles, audit log,
+CSV import+preview+dedup), UI ทุกหน้าตาม spec (A-E) พร้อม responsive +
+loading/empty/error state, บัญชี Admin จริงใช้งานได้, build production ผ่านจริง
+(type-check + lint สะอาด) — **unit tests 27/27, RLS verification 9/9, E2E 14/14
+ผ่านทั้งหมดกับฐานข้อมูลจริง** (รายละเอียดหัวข้อ 9)
 
-สิ่งที่ **ยังไม่เสร็จ/เป็นข้อจำกัด** (ต้องทำต่อก่อนใช้งานจริงในองค์กร):
+สิ่งที่ **ยังไม่เสร็จ/เป็นข้อจำกัด** (ควรทำต่อก่อนเปิดใช้งานในวงกว้าง):
 
-1. **ไม่มีการเชื่อมต่อ Supabase project จริงในการส่งมอบนี้** — ไม่มี credential ให้ จึงไม่ได้
-   รัน migrations/seed/RLS test/E2E จริงกับฐานข้อมูลจริง ต้องทำตามหัวข้อ 3 ก่อนใช้งาน
-2. **Realtime Subscription** ยังไม่เปิดใช้ — ปัจจุบันใช้ revalidate หลังบันทึก (ตามที่ spec
+1. **Realtime Subscription** ยังไม่เปิดใช้ — ปัจจุบันใช้ revalidate หลังบันทึก (ตามที่ spec
    ระบุให้เริ่มจากวิธีนี้ก่อน) schema/RLS ออกแบบรองรับการเพิ่ม Supabase Realtime ได้ภายหลังโดยไม่ต้องแก้ตาราง
-3. **รองรับเฉพาะไฟล์ CSV** — โค้ด import แยก validate/preview/confirm ไว้พร้อมต่อขยาย
+2. **รองรับเฉพาะไฟล์ CSV** — โค้ด import แยก validate/preview/confirm ไว้พร้อมต่อขยาย
    เป็น `.xlsx` (เช่นด้วย `xlsx`/`exceljs`) แต่ยังไม่ได้เขียนตัวอ่านไฟล์ Excel จริง
-4. **ไม่มีหน้า "เปลี่ยนรหัสผ่านตนเอง" หรือ "ลืมรหัสผ่าน"** — ปัจจุบัน admin ต้องสร้าง/รีเซ็ต
+3. **ไม่มีหน้า "เปลี่ยนรหัสผ่านตนเอง" หรือ "ลืมรหัสผ่าน"** — ปัจจุบัน admin ต้องสร้าง/รีเซ็ต
    บัญชีผ่านสคริปต์ที่ใช้ service role key เท่านั้น (ตั้งใจให้ "ไม่เปิดสมัครเอง") ควรเพิ่ม
    Supabase Auth password-reset flow ตามมาตรฐานก่อนใช้งานจริง
-5. **E2E tests (Playwright) ยังไม่ได้รันจริง** — ต้อง `npx playwright install` +
-   Supabase project จริง + `npm run seed` ก่อน (ดูหัวข้อ 9.3) เขียนไว้ครบแต่ยังไม่ผ่านการรันจริงในสภาพแวดล้อมนี้
+4. **ยังไม่ได้ตั้งค่า custom SMTP** สำหรับ Supabase Auth (เช่น reset password, magic
+   link ในอนาคต) — ค่าเริ่มต้นของ Supabase มี rate limit ต่ำ ไม่เหมาะกับ production จริง
+5. **ข้อมูลตัวอย่าง (seed) ที่อยู่ในฐานข้อมูลตอนนี้คือข้อมูลสมมติทั้งหมด** (บัญชี
+   `*.demo@example.org`, รายชื่อ 5 คน) — ควรลบออกก่อนเปิดใช้งานจริงกับข้อมูลองค์กร
+   (`DELETE FROM contacts WHERE email LIKE '%.demo@example.org'` และลบบัญชีผ่าน
+   หน้า Admin > ผู้ใช้งาน)
 6. **จำนวนรายชื่อสูงสุดต่อการนำเข้า CSV ครั้งเดียว** จำกัดไว้ที่ 2,000 แถวเพื่อกันคำขอค้างนาน
    — หากต้องนำเข้าไฟล์ใหญ่กว่านี้ให้แบ่งไฟล์ หรือปรับค่า `MAX_ROWS` ใน `src/lib/actions/import.ts`
 7. **การนับผลค้นหา (`count: "exact"`)** จะช้าลงเมื่อข้อมูลมีหลักหลายแสนแถว — หากองค์กรมีข้อมูล

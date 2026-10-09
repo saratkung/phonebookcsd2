@@ -7,7 +7,10 @@ test("login with invalid credentials shows a Thai error message", async ({ page 
   await page.getByLabel("อีเมล").fill("nobody@example.org");
   await page.getByLabel("รหัสผ่าน").fill("wrongpassword");
   await page.getByRole("button", { name: "เข้าสู่ระบบ" }).click();
-  await expect(page.getByRole("alert")).toContainText("ไม่ถูกต้อง");
+  // Scoped to our error banner's text directly — Next.js also renders its
+  // own route-announcer element with role="alert", which getByRole("alert")
+  // would otherwise match ambiguously (strict-mode violation).
+  await expect(page.getByText("อีเมลหรือรหัสผ่านไม่ถูกต้อง")).toBeVisible();
 });
 
 test("login with valid credentials redirects to the phonebook", async ({ page }) => {

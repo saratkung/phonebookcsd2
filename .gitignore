@@ -49,3 +49,6 @@ next-env.d.ts
 # real personal data (not sample/seed data — never commit)
 /รายชื่อ/
 /import-data/
+
+# Supabase CLI local cache
+/supabase/.temp/

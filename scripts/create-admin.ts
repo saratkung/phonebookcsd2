@@ -9,8 +9,10 @@
  * The script uses SUPABASE_SERVICE_ROLE_KEY — never run this from anywhere
  * but a trusted machine/terminal, and never commit the key.
  */
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+
+loadEnv({ path: ".env.local" });
 
 function parseArgs() {
   const args = process.argv.slice(2);

@@ -18,11 +18,15 @@ test("viewer is redirected away from /manage even when navigating by URL directl
 test("editor can add a new contact", async ({ page }) => {
   await login(page, DEMO_ACCOUNTS.editor.email, DEMO_ACCOUNTS.editor.password);
   await page.goto("/contacts/new");
-  await page.getByLabel("ชื่อ", { exact: true }).fill("ทดสอบ");
-  await page.getByLabel("นามสกุล", { exact: true }).fill("อีทูอี");
+  // Field labels render as "ชื่อ *" (required-marker span) so getByLabel
+  // with exact text doesn't match — target the known input ids instead.
+  await page.locator("#first_name").fill("ทดสอบ");
+  await page.locator("#last_name").fill("อีทูอี");
   await page.getByRole("button", { name: "บันทึก" }).click();
   await expect(page).toHaveURL(/\/contacts\//);
-  await expect(page.getByText("ทดสอบ อีทูอี")).toBeVisible();
+  // Next's route-announcer also echoes the new page's h1 text with
+  // role="alert", colliding with a plain getByText match — scope to the heading.
+  await expect(page.getByRole("heading", { name: "ทดสอบ อีทูอี" })).toBeVisible();
 });
 
 test("admin can see the admin section", async ({ page }) => {

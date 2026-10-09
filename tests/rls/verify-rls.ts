@@ -13,14 +13,19 @@
  * Usage:
  *   npx tsx tests/rls/verify-rls.ts
  */
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+loadEnv({ path: ".env.local" });
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!url || !anonKey) {
-  console.error("กรุณาตั้งค่า NEXT_PUBLIC_SUPABASE_URL และ NEXT_PUBLIC_SUPABASE_ANON_KEY ใน .env.local ก่อน");
+if (!url || !anonKey || !serviceRoleKey) {
+  console.error(
+    "กรุณาตั้งค่า NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY และ SUPABASE_SERVICE_ROLE_KEY ใน .env.local ก่อน"
+  );
   process.exit(1);
 }
 
@@ -73,13 +78,18 @@ async function main() {
       .insert({ first_name: "ทดสอบ", last_name: "เอดิเตอร์" });
     check("editor เพิ่มรายชื่อได้", !insertError);
 
-    const { data: editorProfile } = await editor.from("profiles").select("user_id").eq("role", "editor").limit(1).maybeSingle();
+    const { data: editorProfile } = await editor.from("profiles").select("user_id, role").eq("role", "editor").limit(1).maybeSingle();
     if (editorProfile) {
-      const { error: roleChangeError } = await editor
+      // RLS's USING clause silently filters out rows the caller can't
+      // touch — an unauthorized UPDATE affects zero rows rather than
+      // throwing, so the real assertion is "role unchanged", not "errored".
+      await editor.from("profiles").update({ role: "admin" }).eq("user_id", editorProfile.user_id);
+      const { data: reread } = await editor
         .from("profiles")
-        .update({ role: "admin" })
-        .eq("user_id", editorProfile.user_id);
-      check("editor เปลี่ยนบทบาทตัวเองเป็น admin ไม่ได้", !!roleChangeError);
+        .select("role")
+        .eq("user_id", editorProfile.user_id)
+        .single();
+      check("editor เปลี่ยนบทบาทตัวเองเป็น admin ไม่ได้", reread?.role === "editor");
     }
 
     const { error: deleteError } = await editor.from("contacts").delete().neq("id", "");
@@ -94,6 +104,13 @@ async function main() {
     const { data: depts, error: deptError } = await admin.from("departments").select("*").limit(1);
     check("admin อ่านหน่วยงานได้", !deptError && !!depts);
   }
+
+  // Clean up any test rows this run may have created (the viewer's insert
+  // attempt should have been rejected and created nothing, but the editor's
+  // insert is expected to succeed and would otherwise accumulate junk data
+  // in the real database on every run).
+  const serviceClient = createClient(url!, serviceRoleKey!, { auth: { autoRefreshToken: false, persistSession: false } });
+  await serviceClient.from("contacts").delete().eq("first_name", "ทดสอบ").in("last_name", ["เอดิเตอร์", "ไม่ควรสำเร็จ"]);
 
   console.log(`\nสรุปผล: ผ่าน ${passed} ข้อ, ไม่ผ่าน ${failed} ข้อ`);
   process.exit(failed > 0 ? 1 : 0);

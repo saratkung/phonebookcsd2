@@ -212,7 +212,7 @@ begin
       insert into public.audit_logs (actor_id, action, record_type, record_id, changed_fields)
       values (
         auth.uid(),
-        case when new.is_active then 'profile_activate' else 'profile_deactivate' end,
+        case when new.is_active then 'profile_activate'::audit_action else 'profile_deactivate'::audit_action end,
         'profile', new.user_id, diff
       );
     end if;

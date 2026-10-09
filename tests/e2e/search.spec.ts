@@ -31,7 +31,13 @@ test("clearing filters resets the search", async ({ page }) => {
 
 test("opening a contact's detail page shows their phone numbers", async ({ page }) => {
   await page.getByLabel("ค้นหารายชื่อ").fill("สมชาย");
-  await page.getByText("สมชาย ใจดี").first().click();
+  // Wait for the debounced search to finish navigating (updates the URL)
+  // before clicking — clicking while that replace() is still in flight can
+  // race with the result link's own navigation.
+  await expect(page).toHaveURL(/q=/);
+  const resultLink = page.getByRole("link", { name: /สมชาย ใจดี/ });
+  await expect(resultLink).toBeVisible();
+  await resultLink.click();
   await expect(page).toHaveURL(/\/contacts\//);
   await expect(page.getByText("0812345671")).toBeVisible();
 });
