@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f5f5f6;
+  --surface: #ffffff;
+  --surface-muted: #ececee;
+  --foreground: #18181b;
+  --muted-foreground: #6b6b71;
+  --border: #dddde1;
+
+  --sidebar-bg: #15151a;
+  --sidebar-fg: #e7e7ea;
+  --sidebar-muted: #9a9aa3;
+  --sidebar-active: #26262e;
+
+  --accent: #9a1b2f;
+  --accent-hover: #80172a;
+  --accent-foreground: #ffffff;
+
+  --success: #15803d;
+  --danger: #b3261e;
+  --warning: #a16207;
+
+  --font-sarabun: "Sarabun", "Noto Sans Thai", ui-sans-serif, system-ui, sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-fg: var(--sidebar-fg);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+
+  --font-sans: var(--font-sarabun);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sarabun);
+}
+
+* {
+  border-color: var(--border);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c9c9cd;
+  border-radius: 6px;
+}

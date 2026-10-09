@@ -1,0 +1,3 @@
+prefix,first_name,last_name,nickname,rank,position,department_name,mobile_phone,mobile_visibility,office_phone,extension,email,work_location,notes
+นาย,สมชาย,ใจดี,ชาย,-,นักวิชาการคอมพิวเตอร์,ฝ่ายเทคโนโลยีสารสนเทศ,0812345678,public,021234567,1234,somchai.example@example.org,อาคาร 1 ชั้น 3,ตัวอย่างข้อมูลสมมติเท่านั้น
+นาง,สมหญิง,รักเรียน,หญิง,-,เจ้าหน้าที่ธุรการ,ฝ่ายบุคคล,0898765432,private,021234568,1235,somying.example@example.org,อาคาร 2 ชั้น 1,
