@@ -4,6 +4,18 @@ import type { Database } from "./types";
 
 const PUBLIC_PATHS = ["/login", "/auth/callback"];
 
+// Public read-only phonebook: the home search page and a contact's detail
+// page ("/contacts/<id>", but not "/contacts/new" or ".../edit") don't
+// require login. Everything else (favorites, manage, admin, new/edit forms)
+// still requires an authenticated session.
+const PUBLIC_CONTACT_DETAIL = /^\/contacts\/(?!new\b)[^/]+$/;
+
+function isPublicPath(path: string): boolean {
+  if (path === "/") return true;
+  if (PUBLIC_CONTACT_DETAIL.test(path)) return true;
+  return PUBLIC_PATHS.some((p) => path.startsWith(p));
+}
+
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -35,7 +47,7 @@ export async function updateSession(request: NextRequest) {
   const user = data.user;
 
   const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p));
+  const isPublic = isPublicPath(path);
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();

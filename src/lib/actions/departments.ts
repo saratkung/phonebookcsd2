@@ -2,11 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireRole, requireSession } from "@/lib/auth";
+import { requireRole } from "@/lib/auth";
 import type { Department } from "@/lib/supabase/types";
 
 export async function listDepartments(): Promise<Department[]> {
-  await requireSession();
+  // Public, read-only — the department filter on the public phonebook needs
+  // this without a session too.
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("departments")
@@ -18,7 +19,7 @@ export async function listDepartments(): Promise<Department[]> {
 }
 
 export async function getDepartmentById(id: string): Promise<Department | null> {
-  await requireSession();
+  // Public, read-only — the public contact-detail page needs this too.
   const supabase = await createClient();
   const { data, error } = await supabase.from("departments").select("*").eq("id", id).maybeSingle();
   if (error) throw new Error("โหลดข้อมูลหน่วยงานไม่สำเร็จ");

@@ -18,11 +18,13 @@ export function ContactRow({
   departmentName,
   isFavorite,
   onToggleFavorite,
+  canFavorite = true,
 }: {
   contact: Contact;
   departmentName: string | null;
   isFavorite: boolean;
   onToggleFavorite?: (contactId: string, next: boolean) => void;
+  canFavorite?: boolean;
 }) {
   const { show } = useToast();
   const [favorite, setFavorite] = useState(isFavorite);
@@ -99,16 +101,18 @@ export function ContactRow({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={handleToggleFavorite}
-        disabled={pending}
-        aria-pressed={favorite}
-        aria-label={favorite ? "เอาออกจากรายการโปรด" : "เพิ่มในรายการโปรด"}
-        className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-surface-muted disabled:opacity-50"
-      >
-        <Star className={clsx("size-5", favorite && "fill-accent text-accent")} aria-hidden />
-      </button>
+      {canFavorite && (
+        <button
+          type="button"
+          onClick={handleToggleFavorite}
+          disabled={pending}
+          aria-pressed={favorite}
+          aria-label={favorite ? "เอาออกจากรายการโปรด" : "เพิ่มในรายการโปรด"}
+          className="shrink-0 rounded-full p-1.5 text-muted-foreground hover:bg-surface-muted disabled:opacity-50"
+        >
+          <Star className={clsx("size-5", favorite && "fill-accent text-accent")} aria-hidden />
+        </button>
+      )}
     </div>
   );
 }

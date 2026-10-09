@@ -1,7 +1,7 @@
 import { searchContacts } from "@/lib/actions/contacts";
 import { listDepartments } from "@/lib/actions/departments";
 import { listFavoriteIds } from "@/lib/actions/favorites";
-import { requireSession } from "@/lib/auth";
+import { getOptionalSession } from "@/lib/auth";
 import { PhonebookControls } from "@/components/phonebook/PhonebookControls";
 import { ContactList } from "@/components/phonebook/ContactList";
 import { RecentlyViewedStrip } from "@/components/phonebook/RecentlyViewedStrip";
@@ -15,8 +15,8 @@ export default async function DashboardPage({
   searchParams: Promise<{ q?: string; dept?: string; all?: string; page?: string }>;
 }) {
   const params = await searchParams;
-  const session = await requireSession();
-  const canSeeInactive = session.profile.role !== "viewer";
+  const session = await getOptionalSession();
+  const canSeeInactive = !!session && session.profile.role !== "viewer";
   const includeInactive = canSeeInactive && params.all === "1";
   const page = Math.max(1, Number(params.page) || 1);
 
@@ -28,7 +28,7 @@ export default async function DashboardPage({
       page,
     }),
     listDepartments(),
-    listFavoriteIds(),
+    session ? listFavoriteIds() : Promise.resolve([]),
   ]);
 
   return (
@@ -43,7 +43,12 @@ export default async function DashboardPage({
       <PhonebookControls departments={departments} canSeeInactive={canSeeInactive} />
 
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
-        <ContactList contacts={contacts} departments={departments} favoriteIds={favoriteIds} />
+        <ContactList
+          contacts={contacts}
+          departments={departments}
+          favoriteIds={favoriteIds}
+          canFavorite={!!session}
+        />
         <Pagination page={page} pageSize={pageSize} total={total} />
       </div>
     </div>

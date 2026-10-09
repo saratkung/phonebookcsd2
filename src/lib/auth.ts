@@ -45,6 +45,20 @@ export async function requireSession(): Promise<SessionContext> {
   return { userId: userData.user.id, email: userData.user.email ?? null, profile };
 }
 
+/**
+ * Same lookup as requireSession(), but returns null instead of throwing for
+ * an anonymous visitor. Used only by the public, read-only phonebook pages
+ * (search + contact detail) — every write path still uses requireSession()/
+ * requireRole(), which fail closed.
+ */
+export async function getOptionalSession(): Promise<SessionContext | null> {
+  try {
+    return await requireSession();
+  } catch {
+    return null;
+  }
+}
+
 export async function requireRole(roles: UserRole[]): Promise<SessionContext> {
   const session = await requireSession();
   if (!roles.includes(session.profile.role)) {

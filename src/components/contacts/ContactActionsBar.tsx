@@ -17,12 +17,14 @@ export function ContactActionsBar({
   isFavorite,
   isActive,
   canEdit,
+  canFavorite = true,
 }: {
   contactId: string;
   fullName: string;
   isFavorite: boolean;
   isActive: boolean;
   canEdit: boolean;
+  canFavorite?: boolean;
 }) {
   const router = useRouter();
   const { show } = useToast();
@@ -67,15 +69,17 @@ export function ContactActionsBar({
         </button>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleToggleFavorite}
-            aria-pressed={favorite}
-            aria-label={favorite ? "เอาออกจากรายการโปรด" : "เพิ่มในรายการโปรด"}
-            className="rounded-full p-2 text-muted-foreground hover:bg-surface-muted"
-          >
-            <Star className={clsx("size-5", favorite && "fill-accent text-accent")} aria-hidden />
-          </button>
+          {canFavorite && (
+            <button
+              type="button"
+              onClick={handleToggleFavorite}
+              aria-pressed={favorite}
+              aria-label={favorite ? "เอาออกจากรายการโปรด" : "เพิ่มในรายการโปรด"}
+              className="rounded-full p-2 text-muted-foreground hover:bg-surface-muted"
+            >
+              <Star className={clsx("size-5", favorite && "fill-accent text-accent")} aria-hidden />
+            </button>
+          )}
 
           {canEdit && (
             <>

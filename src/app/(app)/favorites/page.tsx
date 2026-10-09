@@ -1,8 +1,15 @@
+import { redirect } from "next/navigation";
 import { listFavoriteContacts, listFavoriteIds } from "@/lib/actions/favorites";
 import { listDepartments } from "@/lib/actions/departments";
+import { getOptionalSession } from "@/lib/auth";
 import { ContactList } from "@/components/phonebook/ContactList";
 
 export default async function FavoritesPage() {
+  // The (app) layout no longer forces a session (the phonebook itself is
+  // public), so pages that genuinely require login must check it themselves.
+  const session = await getOptionalSession();
+  if (!session) redirect("/login?next=/favorites");
+
   const [contacts, departments, favoriteIds] = await Promise.all([
     listFavoriteContacts(),
     listDepartments(),

@@ -11,11 +11,13 @@ export function ContactList({
   departments,
   favoriteIds,
   emptyMessage,
+  canFavorite = true,
 }: {
   contacts: Contact[];
   departments: Department[];
   favoriteIds: string[];
   emptyMessage?: string;
+  canFavorite?: boolean;
 }) {
   const [favSet] = useState(() => new Set(favoriteIds));
   const departmentsById = new Map(departments.map((d) => [d.id, d.name]));
@@ -38,6 +40,7 @@ export function ContactList({
           contact={c}
           departmentName={c.department_id ? departmentsById.get(c.department_id) ?? null : null}
           isFavorite={favSet.has(c.id)}
+          canFavorite={canFavorite}
         />
       ))}
     </div>

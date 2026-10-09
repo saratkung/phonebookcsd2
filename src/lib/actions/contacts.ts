@@ -34,7 +34,9 @@ function escapePgFilterValue(value: string): string {
  * to the client.
  */
 export async function searchContacts(params: SearchContactsParams): Promise<SearchContactsResult> {
-  await requireSession();
+  // Public, read-only: no session required. RLS still enforces is_active and
+  // masks mobile_visibility='private' numbers for non-staff (see
+  // supabase/migrations/0006_public_read_access.sql and contacts_view).
   const supabase = await createClient();
 
   const page = Math.max(1, params.page ?? 1);
@@ -81,7 +83,7 @@ export async function searchContacts(params: SearchContactsParams): Promise<Sear
 }
 
 export async function getContactById(id: string): Promise<Contact | null> {
-  await requireSession();
+  // Public, read-only — see note in searchContacts() above.
   const supabase = await createClient();
   const { data, error } = await supabase.from("contacts_view").select("*").eq("id", id).maybeSingle();
   if (error) throw new Error("ไม่สามารถโหลดข้อมูลรายชื่อได้");
