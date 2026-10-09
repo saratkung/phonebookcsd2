@@ -184,16 +184,25 @@ npm run dev
 
 ## 8. การ Deploy
 
-แนะนำ [Vercel](https://vercel.com) (รองรับ Next.js App Router + Server Actions ได้ทันที):
+**Deploy อยู่แล้วที่: https://phonebook-mu.vercel.app** (Vercel project `sarat-team/phonebook`,
+เชื่อมกับ GitHub repo นี้โดยตรง — push ขึ้น `main` แล้ว Vercel จะ deploy ให้อัตโนมัติทุกครั้ง)
 
-1. Push โค้ดขึ้น Git repository (GitHub/GitLab/Bitbucket)
-2. Import โปรเจกต์ใน Vercel
-3. ตั้งค่า Environment Variables ในหน้า Project Settings ของ Vercel ให้ตรงกับ `.env.local`
-   (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_ORG_NAME`)
-4. Deploy — Vercel จะรัน `npm run build` ให้อัตโนมัติ
-5. รัน migrations บน Supabase project ที่ใช้งานจริงแยกต่างหาก (ตามหัวข้อ 3.2) ก่อน deploy ครั้งแรก
+ขั้นตอนที่ทำไปแล้ว (สำหรับ deploy โปรเจกต์ใหม่/ทำซ้ำที่อื่น):
 
-หากต้องการ self-host (เช่น Docker/VM): รัน `npm run build` แล้ว `npm run start`
+1. Push โค้ดขึ้น Git repository (ทำแล้ว — GitHub)
+2. `npx vercel link` เชื่อมโฟลเดอร์นี้กับ Vercel project (ทำแล้ว — สร้าง + เชื่อม GitHub repo ให้อัตโนมัติ)
+3. ตั้งค่า Environment Variables ผ่าน `vercel env add <NAME> production` (และ `preview`)
+   ให้ตรงกับ `.env.local` (ทำแล้วทั้ง 4 ตัว: `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_ORG_NAME`)
+   — หรือตั้งผ่านหน้าเว็บ Vercel Dashboard > Project Settings > Environment Variables ก็ได้
+4. `npx vercel deploy --prod` (ทำแล้ว — build ผ่าน, ตรวจสอบแล้วว่าหน้า `/login` ตอบ 200
+   และหน้าแรกไม่ login จะ redirect ไป `/login` ตามที่ตั้งใจ)
+5. รัน migrations บน Supabase project จริงแยกต่างหาก (ตามหัวข้อ 3.2) ก่อน deploy ครั้งแรก — ทำแล้ว
+
+**Deploy ครั้งต่อไป**: แค่ `git push` ขึ้น `main` ปกติ Vercel จะ build/deploy ให้อัตโนมัติ
+(ไม่ต้องรันคำสั่ง `vercel` เองอีก เว้นแต่ต้องการ deploy แบบ manual หรือ preview)
+
+หากต้องการ self-host (เช่น Docker/VM) แทน Vercel: รัน `npm run build` แล้ว `npm run start`
 (ต้องตั้งค่า Environment Variables ในเครื่อง/คอนเทนเนอร์เช่นเดียวกัน)
 
 ## 9. การทดสอบ
