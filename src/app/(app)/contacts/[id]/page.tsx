@@ -48,9 +48,19 @@ export default async function ContactDetailPage({ params }: { params: Promise<{ 
 
       <div className="rounded-xl border border-border bg-surface p-5">
         <div className="mb-4 flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-lg font-semibold text-foreground">{fullName}</h1>
-            {contact.nickname && <p className="text-sm text-muted-foreground">ชื่อเล่น: {contact.nickname}</p>}
+          <div className="flex items-center gap-3">
+            <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar-bg text-lg font-semibold text-white">
+              {contact.photo_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={contact.photo_url} alt="" className="size-full object-cover" />
+              ) : (
+                `${contact.first_name.charAt(0)}${contact.last_name.charAt(0)}`.toUpperCase()
+              )}
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">{fullName}</h1>
+              {contact.nickname && <p className="text-sm text-muted-foreground">ชื่อเล่น: {contact.nickname}</p>}
+            </div>
           </div>
           {!contact.is_active && <Badge tone="warning">ปิดใช้งาน</Badge>}
         </div>

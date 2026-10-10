@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import Link from "next/link";
-import { Search, AlertTriangle, Save } from "lucide-react";
+import { Search, AlertTriangle, Save, Camera, User, X } from "lucide-react";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -35,6 +35,20 @@ export function ContactForm({
   const [mobilePhone, setMobilePhone] = useState(contact?.mobile_phone ?? "");
   const [dupResult, setDupResult] = useState<Contact[] | null>(null);
   const [checkingDup, setCheckingDup] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(contact?.photo_url ?? null);
+  const [removePhoto, setRemovePhoto] = useState(false);
+
+  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setRemovePhoto(false);
+    setPhotoPreview(URL.createObjectURL(file));
+  }
+
+  function handleRemovePhoto() {
+    setPhotoPreview(null);
+    setRemovePhoto(true);
+  }
 
   useEffect(() => {
     if (state.success && state.contactId) {
@@ -84,6 +98,41 @@ export function ContactForm({
           </div>
         </div>
       )}
+
+      <div className="flex items-center gap-4">
+        <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar-bg text-white">
+          {photoPreview ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoPreview} alt="" className="size-full object-cover" />
+          ) : (
+            <User className="size-8" aria-hidden />
+          )}
+        </div>
+        <div className="flex flex-col items-start gap-1.5">
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-surface-muted">
+            <Camera className="size-4" aria-hidden />
+            {contact?.photo_url ? "เปลี่ยนรูป" : "เพิ่มรูปภาพ"}
+            <input
+              type="file"
+              name="photo"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={handlePhotoChange}
+            />
+          </label>
+          {photoPreview && (
+            <button
+              type="button"
+              onClick={handleRemovePhoto}
+              className="flex items-center gap-1 text-xs text-danger hover:underline"
+            >
+              <X className="size-3" aria-hidden /> ลบรูปภาพ
+            </button>
+          )}
+          <p className="text-xs text-muted-foreground">JPG, PNG หรือ WebP ขนาดไม่เกิน 5MB</p>
+        </div>
+        {removePhoto && <input type="hidden" name="remove_photo" value="1" />}
+      </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="ยศ / คำนำหน้า" htmlFor="prefix">

@@ -104,7 +104,13 @@ $$;
 -- the real number. security_invoker keeps the underlying table's RLS policies
 -- (is_active, etc.) in effect for whoever queries this view.
 -- ----------------------------------------------------------------------------
-create or replace view public.contacts_view
+-- DROP + CREATE rather than CREATE OR REPLACE: later migrations (0007,
+-- 0008) append columns to this view, and CREATE OR REPLACE VIEW refuses to
+-- change a view's column list — re-running this file against a database
+-- that already has the wider view would otherwise fail with "cannot drop
+-- columns from view".
+drop view if exists public.contacts_view;
+create view public.contacts_view
 with (security_invoker = true)
 as
 select

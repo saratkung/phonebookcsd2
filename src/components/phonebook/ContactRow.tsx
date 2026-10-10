@@ -59,8 +59,13 @@ export function ContactRow({
         !contact.is_active && "opacity-60"
       )}
     >
-      <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-sidebar-bg text-sm font-semibold text-white">
-        {initials(contact.first_name, contact.last_name)}
+      <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-sidebar-bg text-sm font-semibold text-white">
+        {contact.photo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={contact.photo_url} alt="" className="size-full object-cover" />
+        ) : (
+          initials(contact.first_name, contact.last_name)
+        )}
       </div>
 
       <div className="min-w-0 flex-1">

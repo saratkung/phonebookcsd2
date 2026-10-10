@@ -13,7 +13,8 @@ comment on column public.contacts.rank_order is
 -- contacts_view must be recreated (not just altered) to expose the new
 -- column — this must run after the column exists, so it lives here rather
 -- than in 0002 (which runs before this file on a fresh install).
-create or replace view public.contacts_view
+drop view if exists public.contacts_view;
+create view public.contacts_view
 with (security_invoker = true)
 as
 select

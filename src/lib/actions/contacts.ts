@@ -7,6 +7,49 @@ import { requireSession, AuthError, canEditContacts } from "@/lib/auth";
 import { contactSchema, type ContactFormValues } from "@/lib/validation/contact";
 import { digitsOnly } from "@/lib/utils/phone";
 import type { Contact } from "@/lib/supabase/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+const PHOTO_BUCKET = "contact-photos";
+const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+/**
+ * Reads the "photo" / "remove_photo" fields out of a contact form submission
+ * and uploads a new photo if one was provided. Returns `undefined` when the
+ * photo should be left untouched (field omitted from the write payload),
+ * `null` when it should be cleared, or the new public URL.
+ */
+async function resolvePhotoUrl(
+  supabase: SupabaseClient,
+  formData: FormData
+): Promise<{ photoUrl: string | null | undefined; error?: string }> {
+  const file = formData.get("photo");
+  if (file instanceof File && file.size > 0) {
+    if (file.size > MAX_PHOTO_BYTES) {
+      return { photoUrl: undefined, error: "ไฟล์รูปภาพต้องมีขนาดไม่เกิน 5MB" };
+    }
+    if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+      return { photoUrl: undefined, error: "รองรับเฉพาะไฟล์รูปภาพ JPEG, PNG หรือ WebP" };
+    }
+    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from(PHOTO_BUCKET).upload(path, file, {
+      contentType: file.type,
+      upsert: false,
+    });
+    if (uploadError) {
+      return { photoUrl: undefined, error: "อัปโหลดรูปภาพไม่สำเร็จ: " + uploadError.message };
+    }
+    const { data: publicUrl } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(path);
+    return { photoUrl: publicUrl.publicUrl };
+  }
+
+  if (formData.get("remove_photo") === "1") {
+    return { photoUrl: null };
+  }
+
+  return { photoUrl: undefined };
+}
 
 export interface SearchContactsParams {
   q?: string;
@@ -191,7 +234,17 @@ export async function createContactAction(
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.from("contacts").insert(values).select("id").single();
+
+  const { photoUrl, error: photoError } = await resolvePhotoUrl(supabase, formData);
+  if (photoError) {
+    return { success: false, error: photoError };
+  }
+
+  const { data, error } = await supabase
+    .from("contacts")
+    .insert({ ...values, photo_url: photoUrl ?? null })
+    .select("id")
+    .single();
 
   if (error) {
     return { success: false, error: "บันทึกข้อมูลไม่สำเร็จ: " + error.message };
@@ -229,7 +282,16 @@ export async function updateContactAction(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("contacts").update(values).eq("id", contactId);
+
+  const { photoUrl, error: photoError } = await resolvePhotoUrl(supabase, formData);
+  if (photoError) {
+    return { success: false, error: photoError };
+  }
+
+  const { error } = await supabase
+    .from("contacts")
+    .update(photoUrl === undefined ? values : { ...values, photo_url: photoUrl })
+    .eq("id", contactId);
 
   if (error) {
     return { success: false, error: "บันทึกข้อมูลไม่สำเร็จ: " + error.message };
