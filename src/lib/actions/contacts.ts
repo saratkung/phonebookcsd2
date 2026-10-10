@@ -71,6 +71,7 @@ export async function searchContacts(params: SearchContactsParams): Promise<Sear
   }
 
   const { data, error, count } = await query
+    .order("rank_order", { ascending: true, nullsFirst: false })
     .order("last_name", { ascending: true })
     .order("first_name", { ascending: true })
     .range(from, to);
@@ -150,6 +151,7 @@ function parseContactForm(formData: FormData) {
     email: String(formData.get("email") ?? ""),
     work_location: String(formData.get("work_location") ?? ""),
     notes: String(formData.get("notes") ?? ""),
+    rank_order: String(formData.get("rank_order") ?? ""),
   };
   return contactSchema.safeParse(raw);
 }

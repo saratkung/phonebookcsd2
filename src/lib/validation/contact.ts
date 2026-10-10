@@ -63,6 +63,15 @@ export const contactSchema = z.object({
     }),
   work_location: optionalText(200),
   notes: optionalText(1000),
+  rank_order: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .transform((v) => (v ? Number(v) : null))
+    .refine((v) => v === null || (Number.isInteger(v) && v >= 0), {
+      message: "ลำดับยศ/ตำแหน่งต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป",
+    }),
 });
 
 export type ContactFormValues = z.infer<typeof contactSchema>;

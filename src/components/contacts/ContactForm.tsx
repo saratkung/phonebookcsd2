@@ -127,6 +127,18 @@ export function ContactForm({
             ))}
           </Select>
         </Field>
+        <Field label="ลำดับยศ/ตำแหน่ง" htmlFor="rank_order" error={state.fieldErrors?.rank_order}>
+          <Input
+            id="rank_order"
+            name="rank_order"
+            type="number"
+            min={0}
+            step={1}
+            placeholder="เช่น 1 = แสดงก่อน, เว้นว่าง = เรียงตามชื่อ"
+            defaultValue={contact?.rank_order ?? ""}
+            error={!!state.fieldErrors?.rank_order}
+          />
+        </Field>
 
         <Field label="เบอร์มือถือ" htmlFor="mobile_phone" error={state.fieldErrors?.mobile_phone}>
           <Input

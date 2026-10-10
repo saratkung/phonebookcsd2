@@ -58,6 +58,7 @@ export type Contact = {
   email: string | null;
   work_location: string | null;
   notes: string | null;
+  rank_order: number | null;
   is_active: boolean;
   created_at: string;
   updated_at: string;
